@@ -1,6 +1,8 @@
 spring:
   application:
     name: yuan-ai-code-mother-backend
+  profiles:
+    active: local
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://localhost:3306/yuan_ai_code_mother
