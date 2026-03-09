@@ -13,6 +13,7 @@ import com.yuanc.yuanaicodemother.exception.ThrowUtils;
 import com.yuanc.yuanaicodemother.model.dto.user.*;
 import com.yuanc.yuanaicodemother.model.vo.LoginUserVO;
 import com.yuanc.yuanaicodemother.model.vo.UserVO;
+import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -36,7 +37,7 @@ import java.util.List;
 @RequestMapping("/user")
 public class UserController {
 
-    @Autowired
+    @Resource
     private UserService userService;
 
     /**
