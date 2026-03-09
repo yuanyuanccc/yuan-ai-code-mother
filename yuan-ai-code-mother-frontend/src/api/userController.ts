@@ -100,7 +100,7 @@ export async function userLogout(options?: { [key: string]: any }) {
 }
 
 /** 此处后端没有提供注释 POST /user/register */
-export async function register(
+export async function userRegister(
   body: API.UserRegisterRequest,
   options?: { [key: string]: any }
 ) {
