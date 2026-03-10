@@ -3,6 +3,7 @@ package com.yuanc.yuanaicodemother.ai;
 import com.yuanc.yuanaicodemother.ai.model.HtmlCodeResult;
 import com.yuanc.yuanaicodemother.ai.model.MultiFileCodeResult;
 import dev.langchain4j.service.SystemMessage;
+import dev.langchain4j.service.UserMessage;
 import reactor.core.publisher.Flux;
 
 public interface AiCodeGeneratorService {
@@ -15,6 +16,8 @@ public interface AiCodeGeneratorService {
      */
     @SystemMessage(fromResource = "prompt/codegen-html-system-prompt.txt")
     HtmlCodeResult generateHtmlCode(String userMessage);
+
+
 
     /**
      * 生成多文件代码
