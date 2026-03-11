@@ -2,7 +2,7 @@ package com.yuanc.yuanaicodemother.core.saver;
 
 import cn.hutool.core.util.StrUtil;
 import com.yuanc.yuanaicodemother.ai.model.MultiFileCodeResult;
-import com.yuanc.yuanaicodemother.ai.model.enums.CodeGenTypeEnum;
+import com.yuanc.yuanaicodemother.model.enums.CodeGenTypeEnum;
 import com.yuanc.yuanaicodemother.exception.BusinessException;
 import com.yuanc.yuanaicodemother.exception.ErrorCode;
 

@@ -7,7 +7,6 @@ import cn.hutool.core.util.RandomUtil;
 import cn.hutool.core.util.StrUtil;
 import com.mybatisflex.core.query.QueryWrapper;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
-import com.yuanc.yuanaicodemother.ai.model.enums.CodeGenTypeEnum;
 import com.yuanc.yuanaicodemother.constant.AppConstant;
 import com.yuanc.yuanaicodemother.core.AiCodeGeneratorFacade;
 import com.yuanc.yuanaicodemother.core.builder.VueProjectBuilder;
@@ -15,11 +14,12 @@ import com.yuanc.yuanaicodemother.core.handler.StreamHandlerExecutor;
 import com.yuanc.yuanaicodemother.exception.BusinessException;
 import com.yuanc.yuanaicodemother.exception.ErrorCode;
 import com.yuanc.yuanaicodemother.exception.ThrowUtils;
+import com.yuanc.yuanaicodemother.mapper.AppMapper;
 import com.yuanc.yuanaicodemother.model.dto.app.AppQueryRequest;
 import com.yuanc.yuanaicodemother.model.entity.App;
-import com.yuanc.yuanaicodemother.mapper.AppMapper;
 import com.yuanc.yuanaicodemother.model.entity.User;
 import com.yuanc.yuanaicodemother.model.enums.ChatHistoryMessageTypeEnum;
+import com.yuanc.yuanaicodemother.model.enums.CodeGenTypeEnum;
 import com.yuanc.yuanaicodemother.model.vo.AppVO;
 import com.yuanc.yuanaicodemother.model.vo.UserVO;
 import com.yuanc.yuanaicodemother.service.AppService;
@@ -39,23 +39,24 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+
 /**
- *  服务层实现。
+ * 应用 服务层实现。
  *
  * @author yuanc
  */
-@Slf4j
 @Service
-public class AppServiceImpl extends ServiceImpl<AppMapper, App>  implements AppService{
+@Slf4j
+public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppService {
 
     @Resource
     private UserService userService;
 
     @Resource
-    private ChatHistoryService chatHistoryService;
+    private AiCodeGeneratorFacade aiCodeGeneratorFacade;
 
     @Resource
-    private AiCodeGeneratorFacade aiCodeGeneratorFacade;
+    private ChatHistoryService chatHistoryService;
 
     @Resource
     private StreamHandlerExecutor streamHandlerExecutor;
@@ -64,76 +65,30 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App>  implements AppS
     private VueProjectBuilder vueProjectBuilder;
 
     @Override
-    public AppVO getAppVO(App app) {
-        if (app == null) {
-            return null;
-        }
-        AppVO appVO = new AppVO();
-        BeanUtil.copyProperties(app, appVO);
-        // 关联查询用户信息
-        Long userId = app.getUserId();
-        if (userId != null) {
-            User user = userService.getById(userId);
-            UserVO userVO = userService.getUserVO(user);
-            appVO.setUser(userVO);
-        }
-        return appVO;
-    }
-
-    @Override
-    public QueryWrapper getQueryWrapper(AppQueryRequest appQueryRequest) {
-        if (appQueryRequest == null) {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR, "请求参数为空");
-        }
-        Long id = appQueryRequest.getId();
-        String appName = appQueryRequest.getAppName();
-        String cover = appQueryRequest.getCover();
-        String initPrompt = appQueryRequest.getInitPrompt();
-        String codeGenType = appQueryRequest.getCodeGenType();
-        String deployKey = appQueryRequest.getDeployKey();
-        Integer priority = appQueryRequest.getPriority();
-        Long userId = appQueryRequest.getUserId();
-        String sortField = appQueryRequest.getSortField();
-        String sortOrder = appQueryRequest.getSortOrder();
-        return QueryWrapper.create()
-                .eq("id", id)
-                .like("appName", appName)
-                .like("cover", cover)
-                .like("initPrompt", initPrompt)
-                .eq("codeGenType", codeGenType)
-                .eq("deployKey", deployKey)
-                .eq("priority", priority)
-                .eq("userId", userId)
-                .orderBy(sortField, "ascend".equals(sortOrder));
-    }
-
-
-    @Override
     public Flux<String> chatToGenCode(Long appId, String message, User loginUser) {
         // 1. 参数校验
-        ThrowUtils.throwIf(appId == null || appId <= 0, ErrorCode.PARAMS_ERROR, "应用 ID 不能为空");
-        ThrowUtils.throwIf(StrUtil.isBlank(message), ErrorCode.PARAMS_ERROR, "用户消息不能为空");
+        ThrowUtils.throwIf(appId == null || appId <= 0, ErrorCode.PARAMS_ERROR, "应用 ID 错误");
+        ThrowUtils.throwIf(StrUtil.isBlank(message), ErrorCode.PARAMS_ERROR, "提示词不能为空");
         // 2. 查询应用信息
         App app = this.getById(appId);
         ThrowUtils.throwIf(app == null, ErrorCode.NOT_FOUND_ERROR, "应用不存在");
-        // 3. 验证用户是否有权限访问该应用，仅本人可以生成代码
+        // 3. 权限校验，仅本人可以和自己的应用对话
         if (!app.getUserId().equals(loginUser.getId())) {
             throw new BusinessException(ErrorCode.NO_AUTH_ERROR, "无权限访问该应用");
         }
         // 4. 获取应用的代码生成类型
-        String codeGenTypeStr = app.getCodeGenType();
-        CodeGenTypeEnum codeGenTypeEnum = CodeGenTypeEnum.getEnumByValue(codeGenTypeStr);
+        String codeGenType = app.getCodeGenType();
+        CodeGenTypeEnum codeGenTypeEnum = CodeGenTypeEnum.getEnumByValue(codeGenType);
         if (codeGenTypeEnum == null) {
-            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "不支持的代码生成类型");
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "应用代码生成类型错误");
         }
-        // 5. 通过校验后，添加用户消息到对话历史
+        // 5. 在调用 AI 前，先保存用户消息到数据库中
         chatHistoryService.addChatMessage(appId, message, ChatHistoryMessageTypeEnum.USER.getValue(), loginUser.getId());
         // 6. 调用 AI 生成代码（流式）
         Flux<String> codeStream = aiCodeGeneratorFacade.generateAndSaveCodeStream(message, codeGenTypeEnum, appId);
-        // 7. 收集 AI 响应内容并在完成后记录到对话历史
+        // 7. 收集 AI 响应的内容，并且在完成后保存记录到对话历史
         return streamHandlerExecutor.doExecute(codeStream, chatHistoryService, appId, loginUser, codeGenTypeEnum);
     }
-
 
     @Override
     public String deployApp(Long appId, User loginUser) {
@@ -192,33 +147,22 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App>  implements AppS
         return String.format("%s/%s", AppConstant.CODE_DEPLOY_HOST, deployKey);
     }
 
-    /**
-     * 删除应用时关联删除对话历史
-     *
-     * @param id 应用ID
-     * @return 是否成功
-     */
     @Override
-    public boolean removeById(Serializable id) {
-        if (id == null) {
-            return false;
+    public AppVO getAppVO(App app) {
+        if (app == null) {
+            return null;
         }
-        // 转换为 Long 类型
-        Long appId = Long.valueOf(id.toString());
-        if (appId <= 0) {
-            return false;
+        AppVO appVO = new AppVO();
+        BeanUtil.copyProperties(app, appVO);
+        // 关联查询用户信息
+        Long userId = app.getUserId();
+        if (userId != null) {
+            User user = userService.getById(userId);
+            UserVO userVO = userService.getUserVO(user);
+            appVO.setUser(userVO);
         }
-        // 先删除关联的对话历史
-        try {
-            chatHistoryService.deleteByAppId(appId);
-        } catch (Exception e) {
-            // 记录日志但不阻止应用删除
-            log.error("删除应用关联对话历史失败: {}", e.getMessage());
-        }
-        // 删除应用
-        return super.removeById(id);
+        return appVO;
     }
-
 
     @Override
     public List<AppVO> getAppVOList(List<App> appList) {
@@ -239,4 +183,55 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App>  implements AppS
         }).collect(Collectors.toList());
     }
 
+    @Override
+    public QueryWrapper getQueryWrapper(AppQueryRequest appQueryRequest) {
+        if (appQueryRequest == null) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "请求参数为空");
+        }
+        Long id = appQueryRequest.getId();
+        String appName = appQueryRequest.getAppName();
+        String cover = appQueryRequest.getCover();
+        String initPrompt = appQueryRequest.getInitPrompt();
+        String codeGenType = appQueryRequest.getCodeGenType();
+        String deployKey = appQueryRequest.getDeployKey();
+        Integer priority = appQueryRequest.getPriority();
+        Long userId = appQueryRequest.getUserId();
+        String sortField = appQueryRequest.getSortField();
+        String sortOrder = appQueryRequest.getSortOrder();
+        return QueryWrapper.create()
+                .eq("id", id)
+                .like("appName", appName)
+                .like("cover", cover)
+                .like("initPrompt", initPrompt)
+                .eq("codeGenType", codeGenType)
+                .eq("deployKey", deployKey)
+                .eq("priority", priority)
+                .eq("userId", userId)
+                .orderBy(sortField, "ascend".equals(sortOrder));
+    }
+
+    /**
+     * 删除应用时，关联删除对话历史
+     *
+     * @param id
+     * @return
+     */
+    @Override
+    public boolean removeById(Serializable id) {
+        if (id == null) {
+            return false;
+        }
+        long appId = Long.parseLong(id.toString());
+        if (appId <= 0) {
+            return false;
+        }
+        // 先删除关联的对话历史
+        try {
+            chatHistoryService.deleteByAppId(appId);
+        } catch (Exception e) {
+            log.error("删除应用关联的对话历史失败：{}", e.getMessage());
+        }
+        // 删除应用
+        return super.removeById(id);
+    }
 }

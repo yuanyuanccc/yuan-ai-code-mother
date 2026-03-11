@@ -1,6 +1,6 @@
 package com.yuanc.yuanaicodemother.core.handler;
 
-import com.yuanc.yuanaicodemother.ai.model.enums.CodeGenTypeEnum;
+import com.yuanc.yuanaicodemother.model.enums.CodeGenTypeEnum;
 import com.yuanc.yuanaicodemother.model.entity.User;
 import com.yuanc.yuanaicodemother.service.ChatHistoryService;
 import jakarta.annotation.Resource;

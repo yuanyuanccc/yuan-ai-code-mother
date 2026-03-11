@@ -5,7 +5,7 @@ import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.StrUtil;
 import com.yuanc.yuanaicodemother.ai.model.HtmlCodeResult;
 import com.yuanc.yuanaicodemother.ai.model.MultiFileCodeResult;
-import com.yuanc.yuanaicodemother.ai.model.enums.CodeGenTypeEnum;
+import com.yuanc.yuanaicodemother.model.enums.CodeGenTypeEnum;
 
 import java.io.File;
 import java.nio.charset.StandardCharsets;

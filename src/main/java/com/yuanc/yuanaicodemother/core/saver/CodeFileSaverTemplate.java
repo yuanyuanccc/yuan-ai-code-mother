@@ -1,9 +1,8 @@
 package com.yuanc.yuanaicodemother.core.saver;
 
 import cn.hutool.core.io.FileUtil;
-import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.StrUtil;
-import com.yuanc.yuanaicodemother.ai.model.enums.CodeGenTypeEnum;
+import com.yuanc.yuanaicodemother.model.enums.CodeGenTypeEnum;
 import com.yuanc.yuanaicodemother.constant.AppConstant;
 import com.yuanc.yuanaicodemother.exception.BusinessException;
 import com.yuanc.yuanaicodemother.exception.ErrorCode;
