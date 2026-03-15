@@ -2,7 +2,6 @@ package com.yuanc.yuanaicodemother.service;
 
 import com.mybatisflex.core.query.QueryWrapper;
 import com.mybatisflex.core.service.IService;
-import com.yuanc.yuanaicodemother.model.dto.app.AppAddRequest;
 import com.yuanc.yuanaicodemother.model.dto.app.AppQueryRequest;
 import com.yuanc.yuanaicodemother.model.entity.App;
 import com.yuanc.yuanaicodemother.model.entity.User;
@@ -21,10 +20,6 @@ public interface AppService extends IService<App> {
     AppVO getAppVO(App app);
 
     QueryWrapper getQueryWrapper(AppQueryRequest appQueryRequest);
-
-    Long createApp(AppAddRequest appAddRequest, User loginUser);
-
-    void generateAppScreenshotAsync(Long appId, String appUrl);
 
     Flux<String> chatToGenCode(Long appId, String message, User loginUser);
 
