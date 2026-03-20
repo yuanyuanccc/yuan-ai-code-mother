@@ -1,7 +1,7 @@
 /**
  * 环境变量配置说明
  *
- * 在项目根目录创建 .env.local 或 .env.development 文件，并添加以下配置：
+ * 在项目根目录创建 .env.local 或 ..env.development 文件，并添加以下配置：
  *
  * # 应用部署域名
  * VITE_DEPLOY_DOMAIN=http://localhost
