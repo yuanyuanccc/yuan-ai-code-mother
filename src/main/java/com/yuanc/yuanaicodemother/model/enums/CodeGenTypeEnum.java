@@ -21,6 +21,15 @@ public enum CodeGenTypeEnum {
         this.value = value;
     }
 
+    public String getValue() {
+        return this.value;
+    }
+
+    public String getText() {
+        return this.text;
+    }
+
+
     /**
      * 根据 value 获取枚举
      *
