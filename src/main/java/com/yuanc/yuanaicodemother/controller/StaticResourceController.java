@@ -47,6 +47,20 @@ public class StaticResourceController {
             // 构建文件路径
             String filePath = PREVIEW_ROOT_DIR + "/" + deployKey + resourcePath;
             File file = new File(filePath);
+            // 如果访问的是目录（如 /dist/），自动返回该目录下的 index.html
+            if (file.exists() && file.isDirectory()) {
+                file = new File(file, "index.html");
+            }
+            // SPA 路由回退：当请求的不是静态文件时，回退到应用入口页
+            if (!file.exists() && !resourcePath.contains(".")) {
+                File rootIndex = new File(PREVIEW_ROOT_DIR + "/" + deployKey + "/index.html");
+                File distIndex = new File(PREVIEW_ROOT_DIR + "/" + deployKey + "/dist/index.html");
+                if (distIndex.exists()) {
+                    file = distIndex;
+                } else if (rootIndex.exists()) {
+                    file = rootIndex;
+                }
+            }
             // 检查文件是否存在
             if (!file.exists()) {
                 return ResponseEntity.notFound().build();
@@ -54,7 +68,7 @@ public class StaticResourceController {
             // 返回文件资源
             Resource resource = new FileSystemResource(file);
             return ResponseEntity.ok()
-                    .header("Content-Type", getContentTypeWithCharset(filePath))
+                    .header("Content-Type", getContentTypeWithCharset(file.getName()))
                     .body(resource);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();

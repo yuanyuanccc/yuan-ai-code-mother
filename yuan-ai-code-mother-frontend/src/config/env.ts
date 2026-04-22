@@ -18,5 +18,10 @@ export const getDeployUrl = (deployKey: string) => {
 
 // 获取静态资源预览URL
 export const getStaticPreviewUrl = (codeGenType: string, appId: string) => {
-  return `${STATIC_BASE_URL}/${codeGenType}_${appId}/`
+  const projectRoot = `${STATIC_BASE_URL}/${codeGenType}_${appId}`
+  if (codeGenType === 'vue_project') {
+    // Vue 项目预览应指向构建产物目录，避免直接访问源码目录导致页面渲染异常
+    return `${projectRoot}/dist/`
+  }
+  return `${projectRoot}/`
 }

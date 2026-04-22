@@ -136,6 +136,11 @@ public class OpenAiStreamingChatModel implements StreamingChatModel {
                         }
                     }
                     ChatResponse chatResponse = openAiResponseBuilder.build();
+                    if (chatResponse == null || chatResponse.aiMessage() == null) {
+                        withLoggingExceptions(() -> handler.onError(
+                                new IllegalStateException("OpenAI streaming completed without response content")));
+                        return;
+                    }
                     try {
                         handler.onCompleteResponse(chatResponse);
                     } catch (Exception e) {

@@ -61,6 +61,9 @@ public class GlobalExceptionHandler {
         if ((accept != null && accept.contains("text/event-stream")) || 
             uri.contains("/chat/gen/code")) {
             try {
+                if (response == null || response.isCommitted()) {
+                    return true;
+                }
                 // 设置SSE响应头
                 response.setContentType("text/event-stream");
                 response.setCharacterEncoding("UTF-8");
@@ -82,7 +85,7 @@ public class GlobalExceptionHandler {
                 response.getWriter().flush();
                 // 表示已处理SSE请求
                 return true;
-            } catch (IOException ioException) {
+            } catch (IOException | IllegalStateException ioException) {
                 log.error("Failed to write SSE error response", ioException);
                 // 即使写入失败，也表示这是SSE请求
                 return true;
