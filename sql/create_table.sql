@@ -61,3 +61,6 @@ create table chat_history
     INDEX idx_createTime (createTime),             -- 提升基于时间的查询性能
     INDEX idx_appId_createTime (appId, createTime) -- 游标查询核心索引
 ) comment '对话历史' collate = utf8mb4_unicode_ci;
+
+ALTER TABLE chat_history
+    MODIFY COLUMN message LONGTEXT;

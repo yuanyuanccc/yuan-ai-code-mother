@@ -6,7 +6,7 @@
         <RouterLink to="/">
           <div class="header-left">
             <img class="logo" src="@/assets/logo.png" alt="Logo" />
-            <h1 class="site-title">快做</h1>
+            <h1 class="site-title">Zero Gen</h1>
           </div>
         </RouterLink>
       </a-col>
